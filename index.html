@@ -3,16 +3,66 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Дневен календар</title>
+  <title>Дневен револвер</title>
   <style>
     body { background: #000; color: #fff; font-family: sans-serif; margin: 0; padding: 0; }
     h1 { text-align: center; margin: 20px 0; }
+    p { text-align: center; }
+    .roller-container {
+      text-align: center;
+      margin: 30px auto;
+      max-width: 320px;
+      height: 180px;
+      overflow-y: scroll;
+      border: 2px solid #fff;
+      border-radius: 10px;
+      background: #111;
+    }
+    .activity {
+      font-size: 20px;
+      padding: 20px;
+      border-bottom: 1px solid #333;
+      cursor: pointer;
+    }
+    .activity:nth-child(1), .log-item.Ставане { background-color: #1abc9c; }
+    .activity:nth-child(2), .log-item.Закуска { background-color: #3498db; }
+    .activity:nth-child(3), .log-item.Обед { background-color: #9b59b6; }
+    .activity:nth-child(4), .log-item.Вечеря { background-color: #e67e22; }
+    .activity:nth-child(5), .log-item.Фитнес { background-color: #e74c3c; }
+    .activity:nth-child(6), .log-item.Работа { background-color: #2ecc71; }
+    .activity:nth-child(7), .log-item.Почивка { background-color: #f1c40f; }
+    .activity:nth-child(8), .log-item.Филм { background-color: #34495e; }
+    .activity:nth-child(9), .log-item.Лягане { background-color: #ff6f61; }
+
+    .activity:hover { filter: brightness(1.2); }
+
+    .log, .calendar-log {
+      max-width: 90%;
+      margin: 20px auto;
+      background: #111;
+      padding: 20px;
+      border-radius: 10px;
+    }
+    .log h3, .calendar-log h3 {
+      margin-top: 0;
+      text-align: center;
+    }
+    .log ul {
+      padding-left: 20px;
+      list-style: none;
+    }
+    .log li {
+      padding: 5px 10px;
+      margin-bottom: 5px;
+      border-radius: 5px;
+    }
+
     .calendar-grid {
       display: grid;
       grid-template-columns: 60px repeat(7, 1fr);
       grid-auto-rows: 40px;
       max-width: 1000px;
-      margin: auto;
+      margin: 40px auto;
       border: 1px solid #444;
     }
     .calendar-grid div {
@@ -30,33 +80,85 @@
       padding: 2px 4px;
       height: 100%;
     }
-    .container { padding: 10px; text-align: center; }
   </style>
 </head>
 <body>
-  <h1>Календар (седмичен изглед)</h1>
-  <div class="container">
-    <div class="calendar-grid" id="calendar">
-      <!-- Header Days -->
-    </div>
+  <h1>Дневен револвер</h1>
+  <p>Плъзни и избери активност</p>
+  <div class="roller-container" id="roller"></div>
+
+  <div class="log">
+    <h3>Лог:</h3>
+    <ul id="log"></ul>
+  </div>
+
+  <div class="calendar-log">
+    <h3>Календар с дейности:</h3>
+    <table>
+      <thead>
+        <tr><th>Начало</th><th>Край</th><th>Активност</th><th>Продължителност</th></tr>
+      </thead>
+      <tbody id="calendar-body"></tbody>
+    </table>
+  </div>
+
+  <h1>Седмичен изглед (като Google Calendar)</h1>
+  <div class="calendar-grid" id="calendar">
+    <!-- динамичен календар -->
   </div>
 
   <script>
-    const days = ['Пон', 'Вто', 'Сря', 'Чет', 'Пет', 'Съб', 'Нед'];
-    const hours = Array.from({ length: 24 }, (_, i) => `${i}:00`);
+    const activities = ["Ставане", "Закуска", "Обед", "Вечеря", "Фитнес", "Работа", "Почивка", "Филм", "Лягане"];
+    const roller = document.getElementById('roller');
+    const log = document.getElementById('log');
+    const calendarBody = document.getElementById('calendar-body');
 
-    const calendar = document.getElementById('calendar');
+    function renderActivities() {
+      roller.innerHTML = '';
+      activities.forEach((act) => {
+        const div = document.createElement('div');
+        div.className = 'activity';
+        div.innerText = act;
+        div.addEventListener('click', () => handleActivityClick(act));
+        roller.appendChild(div);
+      });
+    }
 
-    function buildCalendar() {
-      // Празна клетка горе вляво
-      calendar.appendChild(createDiv(''));
+    let currentActivity = null;
+    let activityStartTime = null;
 
-      // Заглавки за дните
-      for (let d = 0; d < 7; d++) {
-        calendar.appendChild(createDiv(days[d], 'day-label'));
+    function handleActivityClick(activity) {
+      const now = new Date();
+      if (currentActivity !== null) {
+        const durationMin = Math.round((now - activityStartTime) / 60000);
+
+        const li = document.createElement('li');
+        li.className = `log-item ${currentActivity}`;
+        li.innerText = `${currentActivity} | Старт: ${formatTime(activityStartTime)} | Край: ${formatTime(now)} | ${durationMin}m`;
+        log.appendChild(li);
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${formatTime(activityStartTime)}</td><td>${formatTime(now)}</td><td>${currentActivity}</td><td>${durationMin}m</td>`;
+        calendarBody.appendChild(tr);
       }
 
-      // Часове и празни клетки
+      currentActivity = activity;
+      activityStartTime = now;
+    }
+
+    function formatTime(date) {
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    // Гугъл-календар изглед
+    const days = ['Пон', 'Вто', 'Сря', 'Чет', 'Пет', 'Съб', 'Нед'];
+    const hours = Array.from({ length: 24 }, (_, i) => `${i}:00`);
+    const calendar = document.getElementById('calendar');
+
+    function buildGrid() {
+      calendar.innerHTML = '';
+      calendar.appendChild(createDiv(''));
+      for (let d = 0; d < 7; d++) calendar.appendChild(createDiv(days[d], 'day-label'));
       for (let h = 0; h < 24; h++) {
         calendar.appendChild(createDiv(hours[h], 'hour-label'));
         for (let d = 0; d < 7; d++) {
@@ -73,7 +175,7 @@
       return div;
     }
 
-    function simulateEvents() {
+    function simulateWeeklyEvents() {
       const sample = [
         { day: 0, hour: 7, text: 'Ставане', color: '#1abc9c' },
         { day: 0, hour: 8, text: 'Фитнес', color: '#e74c3c' },
@@ -94,8 +196,9 @@
       }
     }
 
-    buildCalendar();
-    simulateEvents();
+    renderActivities();
+    buildGrid();
+    simulateWeeklyEvents();
   </script>
 </body>
 </html>
