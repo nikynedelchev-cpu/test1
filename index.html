@@ -1,175 +1,678 @@
 <!DOCTYPE html>
 <html lang="bg">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Дневен револвер</title>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto&display=swap">
-  <style>
-    body {
-      background: #fff;
-      color: #202124;
-      font-family: 'Roboto', sans-serif;
-      margin: 0;
-      padding: 0;
-    }
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 16px;
-      background: #f1f3f4;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    }
-    .logo {
-      font-weight: bold;
-      font-size: 18px;
-    }
-    .nav-controls button {
-      margin: 0 4px;
-      padding: 6px 10px;
-      border: none;
-      background: #e8eaed;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .nav-controls button:hover {
-      background: #dadce0;
-    }
-    .toolbar {
-      display: flex;
-      justify-content: space-between;
-      padding: 12px 16px;
-      background: #fff;
-      border-bottom: 1px solid #dadce0;
-    }
-    .toolbar h2 {
-      margin: 0;
-      font-size: 16px;
-    }
-    .calendar-grid {
-      display: grid;
-      grid-template-columns: 60px repeat(7, 1fr);
-      grid-auto-rows: 60px;
-      border-top: 1px solid #dadce0;
-    }
-    .calendar-grid > div {
-      border: 1px solid #dadce0;
-      padding: 4px;
-      font-size: 12px;
-      overflow: hidden;
-    }
-    .hour-label {
-      background: #f8f9fa;
-      text-align: right;
-      padding-right: 6px;
-      color: #5f6368;
-    }
-    .day-label {
-      background: #f8f9fa;
-      text-align: center;
-      font-weight: 500;
-    }
-    .event {
-      background-color: #4285f4;
-      color: #fff;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 12px;
-      margin: 2px 0;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Активен Дневник</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f9;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-top: 0;
+        }
+
+        /* БУТОН ЗА НАСТРОЙКИ */
+        #settings-btn {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            font-size: 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            z-index: 2000;
+        }
+
+        /* КОНТЕЙНЕР НА РОЛКАТА */
+        #slot-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 30px auto;
+        }
+
+        /* САМАТА РОЛКА */
+        .reel {
+            width: 250px; 
+            height: 50px; 
+            border: 3px solid #666;
+            border-radius: 10px;
+            overflow: hidden; 
+            position: relative;
+            cursor: grab; 
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            touch-action: none; 
+            background-color: #fff; 
+            -webkit-user-select: none;
+            user-select: none; 
+        }
+
+        .reel-items {
+            position: absolute;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            transform: translateY(0); 
+            transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94); 
+        }
+
+        .reel-item {
+            height: 50px !important; 
+            min-height: 50px !important;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 18px;
+            font-weight: bold;
+            /* Цветовете вече се задават динамично от JS */
+            text-shadow: none; 
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            box-sizing: border-box;
+            -webkit-user-select: none;
+            user-select: none; 
+        }
+        
+        .active-activity {
+            box-shadow: 0 0 20px 5px rgba(255, 165, 0, 0.9); 
+        }
+
+        /* СТИЛ ЗА ДАТАТА */
+        .date-header {
+            background-color: #333 !important; 
+            color: #fff !important;           
+            text-align: center;
+            font-size: 1.1em;
+            font-weight: bold;
+            margin: 20px auto !important;
+            padding: 8px 10px !important;
+            border-radius: 6px;
+            display: block; 
+            max-width: 300px; 
+        }
+
+        /* ЛОГ КОНТЕЙНЕР */
+        #log-container {
+            margin-top: 40px;
+            padding: 0 20px 20px 20px;
+        }
+        
+        #log-container h2 { display: none; }
+
+        #activity-log {
+            list-style: none;
+            padding: 0;
+            margin: 0 auto;
+            max-width: 300px; 
+            text-align: center; 
+        }
+        
+        #activity-log li {
+            list-style: none;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            font-weight: 500;
+            text-align: center; 
+            word-break: break-word; 
+        }
+
+        /* --- МОДАЛЕН ПРОЗОРЕЦ ЗА НАСТРОЙКИ --- */
+        #settings-modal {
+            display: none; /* Скрит по подразбиране */
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            z-index: 3000;
+            overflow-y: auto;
+        }
+
+        .settings-content {
+            background-color: #fff;
+            margin: 20px auto;
+            padding: 20px;
+            width: 90%;
+            max-width: 400px;
+            border-radius: 10px;
+            text-align: left;
+        }
+
+        .setting-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            gap: 5px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+
+        .setting-row input[type="text"] {
+            flex-grow: 1;
+            padding: 5px;
+            font-size: 16px;
+        }
+
+        .setting-row input[type="color"] {
+            width: 40px;
+            height: 40px;
+            border: none;
+            cursor: pointer;
+            background: none;
+        }
+        
+        .label-small {
+            font-size: 10px;
+            color: #666;
+            text-align: center;
+            width: 40px;
+        }
+
+        .delete-btn {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .add-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 10px;
+            border-top: 1px dashed #ccc;
+        }
+        
+        .add-row input[type="text"] {
+            flex-grow: 1;
+        }
+        
+        .add-btn {
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+
+        .save-btn {
+            width: 100%;
+            padding: 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
-  <header>
-    <div class="logo">Календар</div>
-    <div class="nav-controls">
-      <button onclick="changeWeek(-1)">←</button>
-      <button onclick="goToToday()">Днес</button>
-      <button onclick="changeWeek(1)">→</button>
-    </div>
-  </header>
 
-  <div class="toolbar">
-    <h2 id="current-week"></h2>
+    <button id="settings-btn">⚙️</button>
+
+    <div id="settings-modal">
+        <div class="settings-content">
+            <h2>Настройки на Дейности</h2>
+            <p style="font-size: 12px; color: #666; margin-bottom: 15px;">Променете или премахнете съществуващи дейности.</p>
+            <div id="settings-list">
+                </div>
+            
+            <div class="add-row">
+                <input type="text" id="new-activity-name" placeholder="Име на нова дейност">
+                <button class="add-btn" onclick="addNewActivity()">➕ Добави</button>
+            </div>
+
+            <button class="save-btn" onclick="saveAndCloseSettings()">ЗАПАЗИ ПРОМЕНИТЕ</button>
+        </div>
+    </div>
+
     <div>
-      <button>Ден</button>
-      <button>Седмица</button>
-      <button>Месец</button>
+        <h1>Активен Дневник</h1>
+        <div id="slot-container">
+            <div id="main-reel" class="reel">
+                <div id="reel-items" class="reel-items">
+                    </div>
+            </div>
+        </div>
+        
+        <div id="current-activity-display" style="text-align: center; margin-top: 20px; font-size: 16px; font-weight: bold; color: #555;">
+            
+        </div>
     </div>
-  </div>
 
-  <div class="calendar-grid" id="calendar"></div>
+    <div id="log-container">
+        <h2>Лог на Дейностите</h2>
+        <ul id="activity-log">
+        </ul>
+    </div>
 
-  <script>
-    const calendar = document.getElementById('calendar');
-    const currentWeekLabel = document.getElementById('current-week');
-    let baseDate = new Date();
-
-    function goToToday() {
-      baseDate = new Date();
-      buildGrid();
-    }
-
-    function changeWeek(offset) {
-      baseDate.setDate(baseDate.getDate() + offset * 7);
-      buildGrid();
-    }
-
-    function buildGrid() {
-      calendar.innerHTML = '';
-      const weekStart = new Date(baseDate);
-      weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1);
-      const days = [];
-      for (let i = 0; i < 7; i++) {
-        const d = new Date(weekStart);
-        d.setDate(d.getDate() + i);
-        days.push(d);
-      }
-      currentWeekLabel.textContent = `${days[0].toLocaleDateString()} - ${days[6].toLocaleDateString()}`;
-      calendar.appendChild(document.createElement('div'));
-      days.forEach(d => {
-        const div = document.createElement('div');
-        div.className = 'day-label';
-        div.textContent = d.toLocaleDateString('bg-BG', { weekday: 'short', day: '2-digit', month: '2-digit' });
-        calendar.appendChild(div);
-      });
-      for (let h = 0; h < 24; h++) {
-        const label = document.createElement('div');
-        label.className = 'hour-label';
-        label.textContent = `${h}:00`;
-        calendar.appendChild(label);
-        for (let d = 0; d < 7; d++) {
-          const cell = document.createElement('div');
-          cell.className = `cell-${d}-${h}`;
-          calendar.appendChild(cell);
-        }
-      }
-      simulateSampleEvents(days);
-    }
-
-    function simulateSampleEvents(days) {
-      for (let i = 0; i < 7; i++) {
-        const d = i;
-        const sample = [
-          { hour: 8, text: 'Закуска' },
-          { hour: 9, text: 'Работа' },
-          { hour: 13, text: 'Почивка' },
-          { hour: 18, text: 'Филм' }
+    <script>
+        // ГЛОБАЛНИ ПРОМЕНЛИВИ
+        // Дефинираме дейностите като обекти с име и цветове
+        let defaultActivities = [
+            { name: 'Ставане', bg: '#e57373', text: '#ffffff' },
+            { name: 'Лягане', bg: '#64b5f6', text: '#ffffff' },
+            { name: 'Обяд', bg: '#81c784', text: '#ffffff' },
+            { name: 'Закуска', bg: '#ffb74d', text: '#ffffff' },
+            { name: 'Вечеря', bg: '#ba68c8', text: '#ffffff' },
+            { name: 'Филми', bg: '#4db6ac', text: '#ffffff' },
+            { name: 'Фитнес', bg: '#ff8a65', text: '#ffffff' },
+            { name: 'Работа', bg: '#a1887f', text: '#ffffff' },
+            { name: 'Четене', bg: '#fff176', text: '#333333' }, 
+            { name: 'Почивка', bg: '#90a4ae', text: '#ffffff' }
         ];
-        sample.forEach(evt => {
-          const cell = document.querySelector(`.cell-${d}-${evt.hour}`);
-          if (cell) {
-            const div = document.createElement('div');
-            div.className = 'event';
-            div.innerText = evt.text;
-            cell.appendChild(div);
-          }
-        });
-      }
-    }
 
-    goToToday();
-  </script>
+        let activities = JSON.parse(JSON.stringify(defaultActivities)); // Копие за работа
+        let activityData = []; 
+        let activeActivity = null; 
+        
+        // DOM Elements
+        const log = document.getElementById('activity-log');
+        const display = document.getElementById('current-activity-display');
+        const reelItems = document.getElementById('reel-items');
+        const mainReel = document.getElementById('main-reel');
+        const settingsModal = document.getElementById('settings-modal');
+        const settingsList = document.getElementById('settings-list');
+        const settingsBtn = document.getElementById('settings-btn');
+        const newActivityNameInput = document.getElementById('new-activity-name');
+        
+        const itemHeight = 50; 
+        let startY = 0;
+        let currentTranslateY = 0;
+        let isDragging = false; 
+
+        // CONSTANTS
+        const DATA_KEY = 'activityDataJson';
+        const ACTIVE_KEY = 'activeActivityJson';
+        const LAST_DATE_KEY = 'lastLogDate';
+        const ACTIVITIES_KEY = 'customActivitiesConfig'; // Нов ключ за конфигурацията
+
+        document.addEventListener('DOMContentLoaded', (event) => {
+            // 1. Зареждане на данни
+            checkAndLoadLog(); 
+            
+            // 2. Инициализация на дисплея
+            updateDisplay(0);
+
+            // 3. Event Listeners за Настройки
+            settingsBtn.addEventListener('click', openSettings);
+        });
+
+        // --- НАСТРОЙКИ ФУНКЦИИ ---
+
+        function generateSettingsList() {
+             settingsList.innerHTML = '';
+            activities.forEach((act, index) => {
+                const row = document.createElement('div');
+                row.className = 'setting-row';
+                
+                // Име
+                row.innerHTML = `
+                    <div style="display:flex; flex-direction:column; align-items:center;">
+                        <input type="color" id="bg-color-${index}" value="${act.bg}">
+                        <span class="label-small">Фон</span>
+                    </div>
+                    <div style="display:flex; flex-direction:column; align-items:center;">
+                        <input type="color" id="text-color-${index}" value="${act.text}">
+                        <span class="label-small">Текст</span>
+                    </div>
+                    <input type="text" id="name-${index}" value="${act.name}">
+                    <button class="delete-btn" onclick="removeActivity(${index})">[X]</button>
+                `;
+                settingsList.appendChild(row);
+            });
+        }
+        
+        function openSettings() {
+            generateSettingsList();
+            settingsModal.style.display = 'block';
+        }
+        
+        window.removeActivity = function(index) {
+            if (activities.length <= 1) {
+                alert("Не можете да премахнете последната дейност!");
+                return;
+            }
+            if (confirm(`Сигурни ли сте, че искате да премахнете дейност "${activities[index].name}"?`)) {
+                // Изтриване от масива
+                activities.splice(index, 1); 
+                // Пресъздаване на списъка в модала
+                generateSettingsList(); 
+                // Предупреждение за запазване
+                alert("Дейността е премахната от списъка с настройки. Натиснете 'ЗАПАЗИ ПРОМЕНИТЕ', за да я премахнете за постоянно от ролката.");
+            }
+        }
+        
+        window.addNewActivity = function() {
+            const newName = newActivityNameInput.value.trim();
+            if (newName === "") {
+                alert("Моля, въведете име за новата дейност.");
+                return;
+            }
+
+            // Нов цвят - генерираме случаен светъл цвят по подразбиране
+            const randomColor = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+            
+            // Добавяне
+            activities.push({
+                name: newName,
+                bg: randomColor,
+                text: '#ffffff' // По подразбиране бял текст
+            });
+
+            // Обновяване на списъка
+            generateSettingsList();
+            newActivityNameInput.value = ''; // Изчистване на полето
+            
+            alert(`Дейност "${newName}" е добавена. Натиснете 'ЗАПАЗИ ПРОМЕНИТЕ', за да се появи в ролката.`);
+        }
+
+        window.saveAndCloseSettings = function() {
+            // Четем новите стойности от inputs (защото може да е променено име, фон, цвят)
+            for (let i = 0; i < activities.length; i++) {
+                // Тъй като вече може да има по-малко елементи след delete, трябва да вземем стойностите от генерирания списък
+                const nameInput = document.getElementById(`name-${i}`);
+                const bgInput = document.getElementById(`bg-color-${i}`);
+                const textInput = document.getElementById(`text-color-${i}`);
+
+                if (nameInput && bgInput && textInput) {
+                    activities[i].name = nameInput.value.trim();
+                    activities[i].bg = bgInput.value;
+                    activities[i].text = textInput.value;
+                }
+            }
+
+            // Проверка дали има поне една дейност
+            if (activities.length === 0) {
+                 alert("Трябва да има поне една дейност.");
+                 // Връщаме дефолтната, за да не се счупи приложението
+                 activities = JSON.parse(JSON.stringify(defaultActivities)); 
+                 generateSettingsList();
+                 return;
+            }
+
+            // Ако активната дейност е била изтрита
+            if (activeActivity && activeActivity.colorIndex >= activities.length) {
+                activeActivity = null; 
+            }
+
+
+            // Запазваме и обновяваме
+            saveState();
+            generateReelContent(); // Пресъздаваме ролката с новите цветове
+            renderLog(); // Пресъздаваме лога с новите цветове
+            updateDisplay(getCurrentTransformY()); // Обновяваме активния дисплей
+            
+            settingsModal.style.display = 'none';
+        };
+
+        // --- GENERATION & RENDERING ---
+
+        function generateReelContent() {
+            reelItems.innerHTML = ''; 
+            for (let i = 0; i < activities.length; i++) { 
+                const item = document.createElement('div');
+                item.className = `reel-item`; 
+                item.textContent = activities[i].name;
+                
+                // Прилагаме динамични стилове
+                item.style.backgroundColor = activities[i].bg;
+                item.style.color = activities[i].text;
+                
+                item.dataset.activityIndex = i; 
+                reelItems.appendChild(item);
+            }
+        }
+
+        function renderLog() {
+            log.innerHTML = '';
+            const today = new Date();
+
+            if (activeActivity) {
+                const activeTime = new Date(activeActivity.startTime);
+                const statusMessage = document.createElement('li');
+                
+                // Взимаме стиловете от текущата конфигурация
+                const actConfig = activities[activeActivity.colorIndex] || {name: "Неизвестна", bg: "#ccc", text: "#000"};
+                statusMessage.style.backgroundColor = actConfig.bg;
+                statusMessage.style.color = actConfig.text;
+                
+                statusMessage.textContent = `ЗАПОЧНАТО: ${actConfig.name} в ${activeTime.toLocaleTimeString()}`;
+                log.appendChild(statusMessage);
+            }
+
+            [...activityData].reverse().forEach(entry => {
+                const startTime = new Date(entry.startTime);
+                const endTime = new Date(entry.endTime);
+                const duration = endTime.getTime() - startTime.getTime();
+                const durationString = formatDuration(duration);
+
+                const logEntry = document.createElement('li');
+                
+                // Взимаме стиловете
+                const actConfig = activities[entry.colorIndex] || {name: "Неизвестна", bg: "#ccc", text: "#000"};
+                logEntry.style.backgroundColor = actConfig.bg;
+                logEntry.style.color = actConfig.text;
+                
+                // Използваме името от конфигурацията (ако е променено, ще се отрази и в старите логове)
+                logEntry.textContent = `${actConfig.name}: ${startTime.toLocaleTimeString()} - ${endTime.toLocaleTimeString()} | Продължителност: ${durationString}`;
+                log.appendChild(logEntry);
+            });
+
+            const dateHeader = getBulgarianDateHeader(today);
+            const dateLi = document.createElement('li');
+            dateLi.className = 'date-header';
+            dateLi.textContent = dateHeader;
+            log.appendChild(dateLi); 
+        }
+
+        // --- STORAGE & LOGIC ---
+
+        function checkAndLoadLog() {
+            const savedDataJson = localStorage.getItem(DATA_KEY);
+            const savedActiveJson = localStorage.getItem(ACTIVE_KEY);
+            const lastLogDate = localStorage.getItem(LAST_DATE_KEY);
+            const savedActivitiesJson = localStorage.getItem(ACTIVITIES_KEY); 
+            const todayDateString = new Date().toISOString().slice(0, 10);
+
+            // Зареждане на къстъм дейностите
+            if (savedActivitiesJson) {
+                try {
+                    activities = JSON.parse(savedActivitiesJson);
+                } catch (e) { console.error(e); }
+            }
+
+            // Дневен ресет
+            if (lastLogDate !== todayDateString) {
+                activityData = [];
+                activeActivity = null;
+            } else {
+                if (savedDataJson) activityData = JSON.parse(savedDataJson);
+                if (savedActiveJson) activeActivity = JSON.parse(savedActiveJson);
+            }
+            
+            generateReelContent(); 
+            renderLog(); 
+            saveState(); 
+        }
+
+        function saveState() {
+            localStorage.setItem(DATA_KEY, JSON.stringify(activityData));
+            localStorage.setItem(ACTIVE_KEY, JSON.stringify(activeActivity));
+            localStorage.setItem(LAST_DATE_KEY, new Date().toISOString().slice(0, 10)); 
+            localStorage.setItem(ACTIVITIES_KEY, JSON.stringify(activities)); 
+        }
+
+        // --- HELPER FUNCTIONS ---
+
+        function getBulgarianDateHeader(date) {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const dateString = date.toLocaleDateString('bg-BG', options);
+            return dateString.charAt(0).toUpperCase() + dateString.slice(1);
+        }
+        
+        function formatDuration(ms) {
+            const totalSeconds = Math.floor(ms / 1000);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            
+            const parts = [];
+            if (hours > 0) parts.push(`${hours}ч`);
+            if (minutes > 0) parts.push(`${minutes}мин`);
+            if (seconds > 0 || parts.length === 0) parts.push(`${seconds}сек`);
+            
+            return parts.join(' ');
+        }
+
+        function getCurrentTransformY() {
+            const transformMatrix = window.getComputedStyle(reelItems).transform;
+            if (transformMatrix && transformMatrix !== 'none') {
+                const values = transformMatrix.match(/matrix.*\((.+)\)/);
+                if (values && values[1]) {
+                    const valArray = values[1].split(',').map(v => parseFloat(v.trim()));
+                    return valArray.length > 5 ? valArray[5] : 0; 
+                }
+            }
+            return 0;
+        }
+
+        function snapToClosestItem() {
+            let currentY = getCurrentTransformY();
+            const snappedY = Math.round(currentY / itemHeight) * itemHeight;
+            
+            // ВАЖНО: Вече използваме activities.length, защото броят е променлив
+            const maxIndex = activities.length - 1; 
+            const minTranslateY = -(maxIndex * itemHeight); 
+            const maxTranslateY = 0; 
+            
+            let finalY = Math.max(minTranslateY, Math.min(maxTranslateY, snappedY)); 
+            
+            reelItems.style.transform = `translateY(${finalY}px)`;
+            currentTranslateY = finalY;
+            
+            updateDisplay(finalY);
+        }
+        
+        function updateDisplay(snappedY) {
+            const index = Math.abs(Math.round(snappedY / itemHeight)); 
+            // Проверка, ако сме извън границите след изтриване
+            if (index >= activities.length) {
+                // Връщаме скрола в началото и ресетваме
+                reelItems.style.transform = `translateY(0px)`;
+                currentTranslateY = 0;
+                const firstAct = activities[0];
+                display.innerHTML = `Избрана: <span style="padding: 2px 5px; border-radius: 4px; background-color: ${firstAct.bg}; color: ${firstAct.text};">${firstAct.name}</span>. Докоснете за старт.`;
+                return;
+            }
+
+            const act = activities[index]; // Взимаме от обекта с настройки
+            
+            mainReel.classList.remove('active-activity');
+            if (activeActivity) {
+                mainReel.classList.add('active-activity');
+            }
+            
+            display.innerHTML = `Избрана: <span style="padding: 2px 5px; border-radius: 4px; background-color: ${act.bg}; color: ${act.text};">${act.name}</span>. Докоснете за старт.`;
+        }
+
+        function handleTap() {
+            snapToClosestItem(); 
+            
+            const currentY = getCurrentTransformY();
+            const index = Math.abs(Math.round(currentY / itemHeight)); 
+            // Тук взимаме името от текущите настройки
+            const name = activities[index].name;
+            const colorIndex = index; // Пазим индекса, за да знаем коя конфигурация да ползваме
+            const currentTime = new Date();
+            const currentTimeString = currentTime.toISOString(); 
+
+            // Проверка за дублиране
+            if (activeActivity && activeActivity.colorIndex === index) {
+                return; 
+            }
+
+            if (!activeActivity) {
+                // Старт
+                activeActivity = { 
+                    name, 
+                    startTime: currentTimeString, 
+                    colorIndex 
+                };
+            } else {
+                // Стоп старата / Старт новата
+                activityData.push({
+                    name: activeActivity.name,
+                    colorIndex: activeActivity.colorIndex,
+                    startTime: activeActivity.startTime,
+                    endTime: currentTimeString
+                });
+                
+                activeActivity = { 
+                    name, 
+                    startTime: currentTimeString, 
+                    colorIndex 
+                };
+            }
+            
+            renderLog();
+            saveState(); 
+        }
+
+        // --- TOUCH EVENTS ---
+
+        function handleTouchStart(e) {
+            isDragging = false; 
+            startY = e.touches[0].clientY;
+            currentTranslateY = getCurrentTransformY();
+            reelItems.style.transition = 'none';
+        }
+
+        function handleTouchMove(e) {
+            const dy = e.touches[0].clientY - startY;
+            if (Math.abs(dy) > 5) isDragging = true;
+            
+            const newY = currentTranslateY + dy;
+            // ВАЖНО: Вече използваме activities.length
+            const maxIndex = activities.length - 1;
+            const minTranslateY = -(maxIndex * itemHeight);
+            const maxTranslateY = 0;
+            const boundedY = Math.max(minTranslateY, Math.min(maxTranslateY, newY));
+
+            reelItems.style.transform = `translateY(${boundedY}px)`;
+        }
+
+        function handleTouchEnd() {
+            reelItems.style.transition = 'transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+            if (isDragging) {
+                snapToClosestItem(); 
+            } else {
+               handleTap(); 
+            }
+            isDragging = false;
+        }
+
+        mainReel.addEventListener('contextmenu', (e) => e.preventDefault());
+        mainReel.addEventListener('touchstart', handleTouchStart);
+        mainReel.addEventListener('touchmove', handleTouchMove);
+        mainReel.addEventListener('touchend', handleTouchEnd);
+
+    </script>
 </body>
 </html>
+
