@@ -7,41 +7,79 @@
   <style>
     body { font-family: sans-serif; background: #000; color: #fff; margin: 0; padding: 0; }
     h1 { text-align: center; margin-top: 20px; }
-    .roller-container { text-align: center; margin: 30px auto; max-width: 300px; overflow-y: auto; border: 1px solid #fff; border-radius: 10px; }
-    .activity { padding: 20px; border-bottom: 1px solid #333; cursor: pointer; }
-    .activity:hover { background-color: #111; }
+    p { text-align: center; }
+    .roller-container {
+      text-align: center;
+      margin: 30px auto;
+      max-width: 320px;
+      height: 180px;
+      overflow-y: scroll;
+      border: 2px solid #fff;
+      border-radius: 10px;
+      background: #111;
+    }
+    .activity {
+      font-size: 20px;
+      padding: 20px;
+      border-bottom: 1px solid #333;
+      cursor: pointer;
+    }
+    .activity:nth-child(1) { background-color: #1abc9c; }
+    .activity:nth-child(2) { background-color: #3498db; }
+    .activity:nth-child(3) { background-color: #9b59b6; }
+    .activity:nth-child(4) { background-color: #e67e22; }
+    .activity:nth-child(5) { background-color: #e74c3c; }
+    .activity:nth-child(6) { background-color: #2ecc71; }
+    .activity:nth-child(7) { background-color: #f1c40f; }
+    .activity:nth-child(8) { background-color: #34495e; }
+    .activity:nth-child(9) { background-color: #ff6f61; }
+
+    .activity:hover { filter: brightness(1.2); }
+
     .log, .calendar {
-      max-width: 800px;
+      max-width: 90%;
       margin: 20px auto;
       background: #111;
       padding: 20px;
       border-radius: 10px;
     }
-    .log h3, .calendar h3 { margin-top: 0; }
-    .calendar table { width: 100%; border-collapse: collapse; color: #fff; }
+    .log h3, .calendar h3 {
+      margin-top: 0;
+      text-align: center;
+    }
+    .log ul {
+      padding-left: 20px;
+    }
+    .calendar table {
+      width: 100%;
+      border-collapse: collapse;
+      color: #fff;
+    }
     .calendar th, .calendar td {
       border: 1px solid #555;
       padding: 8px;
       text-align: center;
     }
-    .calendar th { background: #222; }
+    .calendar th {
+      background: #222;
+    }
   </style>
 </head>
 <body>
   <h1>Дневен револвер</h1>
-  <p style="text-align:center; color: #fff;">Плъзни и избери активност</p>
-  <div class="roller-container" id="roller">
-  </div>
+  <p>Плъзни и избери активност</p>
+  <div class="roller-container" id="roller"></div>
 
   <div class="log">
     <h3>Лог:</h3>
     <ul id="log"></ul>
   </div>
+
   <div class="calendar">
     <h3>Календар с дейности:</h3>
     <table>
       <thead>
-        <tr><th>Start</th><th>End</th><th>Activity</th><th>Duration</th></tr>
+        <tr><th>Начало</th><th>Край</th><th>Активност</th><th>Продължителност</th></tr>
       </thead>
       <tbody id="calendar-body"></tbody>
     </table>
@@ -57,7 +95,7 @@
 
     function renderActivities() {
       roller.innerHTML = '';
-      activities.forEach((act, index) => {
+      activities.forEach((act) => {
         const div = document.createElement('div');
         div.className = 'activity';
         div.innerText = act;
