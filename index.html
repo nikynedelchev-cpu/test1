@@ -188,6 +188,7 @@
         tr.innerHTML = `<td>${currentActivity}</td><td>${formatTime(activityStartTime)}</td><td>${formatTime(now)}</td><td>${durationMin}m</td>`;
         tr.querySelectorAll('td').forEach(td => td.style.backgroundColor = colors[currentActivity]);
         calendarBody.appendChild(tr);
+        saveToStorage(currentActivity, activityStartTime, now, durationMin);
       }
       currentActivity = activity;
       activityStartTime = now;
@@ -197,16 +198,29 @@
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
 
-    // Google Calendar Grid
+    function saveToStorage(activity, start, end, durationMin) {
+      const logs = JSON.parse(localStorage.getItem('activityLogs') || '[]');
+      logs.push({ activity, start, end, durationMin });
+      localStorage.setItem('activityLogs', JSON.stringify(logs));
+    }
+
+    function loadFromStorage() {
+      const logs = JSON.parse(localStorage.getItem('activityLogs') || '[]');
+      logs.forEach(({ activity, start, end, durationMin }) => {
+        const tr = document.createElement('tr');
+        tr.className = `calendar-item ${activity}`;
+        tr.innerHTML = `<td>${activity}</td><td>${formatTime(new Date(start))}</td><td>${formatTime(new Date(end))}</td><td>${durationMin}m</td>`;
+        tr.querySelectorAll('td').forEach(td => td.style.backgroundColor = colors[activity]);
+        calendarBody.appendChild(tr);
+      });
+    }
+
+    // Google Calendar Grid (непроменена част)
     const calendar = document.getElementById('calendar');
     const currentWeekLabel = document.getElementById('current-week');
     let baseDate = new Date();
 
-    function goToToday() {
-      baseDate = new Date();
-      buildGrid();
-    }
-
+    function goToToday() { baseDate = new Date(); buildGrid(); }
     function changeWeek(offset) {
       baseDate.setDate(baseDate.getDate() + offset * 7);
       buildGrid();
@@ -241,33 +255,11 @@
           calendar.appendChild(cell);
         }
       }
-      simulateLast10Days(days);
-    }
-
-    function simulateLast10Days(days) {
-      for (let i = 0; i < 7; i++) {
-        const d = i;
-        const sample = [
-          { hour: 7, text: 'Ставане' },
-          { hour: 8, text: 'Фитнес' },
-          { hour: 9, text: 'Работа' },
-          { hour: 18, text: 'Филм' }
-        ];
-        sample.forEach(evt => {
-          const cell = document.querySelector(`.cell-${d}-${evt.hour}`);
-          if (cell) {
-            const div = document.createElement('div');
-            div.className = 'event';
-            div.style.background = colors[evt.text];
-            div.innerText = evt.text;
-            cell.appendChild(div);
-          }
-        });
-      }
     }
 
     renderActivities();
     buildGrid();
+    loadFromStorage();
   </script>
 </body>
 </html>
