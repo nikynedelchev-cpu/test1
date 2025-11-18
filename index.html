@@ -69,6 +69,19 @@
     .calendar th {
       background: #222;
     }
+    .toggle-button {
+      display: block;
+      margin: 10px auto;
+      padding: 10px 20px;
+      background: #444;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .toggle-button:hover {
+      background: #666;
+    }
   </style>
 </head>
 <body>
@@ -83,6 +96,7 @@
 
   <div class="calendar">
     <h3>Календар с дейности:</h3>
+    <button class="toggle-button" onclick="toggleDemo()">Покажи демонстрационни дни</button>
     <table>
       <thead>
         <tr><th>Начало</th><th>Край</th><th>Активност</th><th>Продължителност</th></tr>
@@ -98,6 +112,8 @@
     const roller = document.getElementById('roller');
     const log = document.getElementById('log');
     const calendarBody = document.getElementById('calendar-body');
+    const demoRows = [];
+    let demoVisible = false;
 
     function renderActivities() {
       roller.innerHTML = '';
@@ -127,17 +143,23 @@
       activityStartTime = now;
     }
 
-    function addToCalendar(activity, start, end, durationMin) {
+    function addToCalendar(activity, start, end, durationMin, isDemo = false) {
       const tr = document.createElement('tr');
       tr.className = `calendar-item ${activity}`;
       const startStr = formatTime(start);
       const endStr = formatTime(end);
       tr.innerHTML = `<td>${startStr}</td><td>${endStr}</td><td>${activity}</td><td>${durationMin}m</td>`;
-      calendarBody.appendChild(tr);
+      if (isDemo) {
+        demoRows.push(tr);
+      } else {
+        calendarBody.appendChild(tr);
+      }
     }
 
     function formatTime(date) {
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return date.toLocaleString('bg-BG', {
+        day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+      });
     }
 
     function simulateLast10Days() {
@@ -151,19 +173,28 @@
         const sleepEnd = new Date(sleepStart);
         sleepEnd.setHours(7);
         sleepEnd.setDate(sleepEnd.getDate() + 1);
-        addToCalendar("Лягане", sleepStart, sleepEnd, 480);
+        addToCalendar("Лягане", sleepStart, sleepEnd, 480, true);
 
         const fitnessStart = new Date(day);
         fitnessStart.setHours(8);
         const fitnessEnd = new Date(fitnessStart);
         fitnessEnd.setHours(9);
-        addToCalendar("Фитнес", fitnessStart, fitnessEnd, 60);
+        addToCalendar("Фитнес", fitnessStart, fitnessEnd, 60, true);
 
         const workStart = new Date(day);
         workStart.setHours(9, 15);
         const workEnd = new Date(workStart);
         workEnd.setHours(17, 15);
-        addToCalendar("Работа", workStart, workEnd, 480);
+        addToCalendar("Работа", workStart, workEnd, 480, true);
+      }
+    }
+
+    function toggleDemo() {
+      demoVisible = !demoVisible;
+      if (demoVisible) {
+        demoRows.forEach(row => calendarBody.appendChild(row));
+      } else {
+        demoRows.forEach(row => calendarBody.removeChild(row));
       }
     }
 
