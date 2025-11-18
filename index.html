@@ -5,7 +5,77 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Дневен револвер</title>
   <style>
-    /* ... (CSS остава непроменен) ... */
+    body {
+      background-color: #000;
+      color: #fff;
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    .roller-container {
+      display: flex;
+      overflow-x: auto;
+      white-space: nowrap;
+      margin: 10px;
+      padding: 10px;
+      background-color: #111;
+      border: 1px solid #333;
+    }
+    .activity {
+      display: inline-block;
+      padding: 10px 20px;
+      margin-right: 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      background-color: #444;
+    }
+    .log, .calendar-log {
+      padding: 10px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .calendar-log table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .calendar-log th, .calendar-log td {
+      padding: 8px;
+      border: 1px solid #444;
+      text-align: center;
+    }
+    .gcal-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      background-color: #111;
+      color: white;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: 60px repeat(7, 1fr);
+      grid-auto-rows: 40px;
+      max-width: 1000px;
+      margin: 0 auto 100px auto;
+    }
+    .calendar-grid div {
+      border: 1px solid #333;
+      padding: 4px;
+      overflow: hidden;
+    }
+    .hour-label { background: #111; text-align: right; padding-right: 5px; color: #888; font-size: 12px; }
+    .day-label { background: #111; text-align: center; font-weight: bold; color: #fff; }
+    .event {
+      background-color: #2ecc71;
+      color: #000;
+      font-size: 12px;
+      border-radius: 4px;
+      padding: 2px 4px;
+      height: 100%;
+    }
   </style>
 </head>
 <body>
@@ -57,9 +127,12 @@
     const roller = document.getElementById('roller');
     const log = document.getElementById('log');
     const calendarBody = document.getElementById('calendar-body');
+    const calendar = document.getElementById('calendar');
+    const currentWeekLabel = document.getElementById('current-week');
 
     let currentActivity = null;
     let activityStartTime = null;
+    let baseDate = new Date();
 
     function renderActivities() {
       roller.innerHTML = '';
@@ -67,6 +140,7 @@
         const div = document.createElement('div');
         div.className = 'activity';
         div.innerText = act;
+        div.style.backgroundColor = colors[act];
         div.addEventListener('click', () => handleActivityClick(act));
         roller.appendChild(div);
       });
@@ -77,11 +151,9 @@
       if (currentActivity !== null) {
         const durationMin = Math.round((now - activityStartTime) / 60000);
         const tr = document.createElement('tr');
-        tr.className = `calendar-item ${currentActivity}`;
-        tr.innerHTML = `<td>${currentActivity}</td><td>${formatTime(activityStartTime)}</td><td>${formatTime(now)}</td><td>${durationMin}m</td>`;
+        tr.innerHTML = `<td>${currentActivity}</td><td>${formatTime(activityStartTime)}</td><td>${formatTime(now)}</td><td>${durationMin} мин</td>`;
         tr.querySelectorAll('td').forEach(td => td.style.backgroundColor = colors[currentActivity]);
         calendarBody.appendChild(tr);
-        saveToStorage(currentActivity, activityStartTime, now, durationMin);
       }
       currentActivity = activity;
       activityStartTime = now;
@@ -91,28 +163,11 @@
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
 
-    function saveToStorage(activity, start, end, durationMin) {
-      const logs = JSON.parse(localStorage.getItem('activityLogs') || '[]');
-      logs.push({ activity, start, end, durationMin });
-      localStorage.setItem('activityLogs', JSON.stringify(logs));
+    function goToToday() {
+      baseDate = new Date();
+      buildGrid();
     }
 
-    function loadFromStorage() {
-      const logs = JSON.parse(localStorage.getItem('activityLogs') || '[]');
-      logs.forEach(({ activity, start, end, durationMin }) => {
-        const tr = document.createElement('tr');
-        tr.className = `calendar-item ${activity}`;
-        tr.innerHTML = `<td>${activity}</td><td>${formatTime(new Date(start))}</td><td>${formatTime(new Date(end))}</td><td>${durationMin}m</td>`;
-        tr.querySelectorAll('td').forEach(td => td.style.backgroundColor = colors[activity]);
-        calendarBody.appendChild(tr);
-      });
-    }
-
-    const calendar = document.getElementById('calendar');
-    const currentWeekLabel = document.getElementById('current-week');
-    let baseDate = new Date();
-
-    function goToToday() { baseDate = new Date(); buildGrid(); }
     function changeWeek(offset) {
       baseDate.setDate(baseDate.getDate() + offset * 7);
       buildGrid();
@@ -152,7 +207,6 @@
     window.addEventListener('DOMContentLoaded', () => {
       renderActivities();
       buildGrid();
-      loadFromStorage();
     });
   </script>
 </body>
