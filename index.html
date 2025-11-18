@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Календар</title>
+  <title>Дневен револвер</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto&display=swap">
   <style>
     body {
@@ -42,7 +42,6 @@
       padding: 12px 16px;
       background: #fff;
       border-bottom: 1px solid #dadce0;
-      flex-wrap: wrap;
     }
     .toolbar h2 {
       margin: 0;
@@ -79,58 +78,6 @@
       font-size: 12px;
       margin: 2px 0;
     }
-    .roller-container {
-      margin: 20px auto;
-      max-width: 320px;
-      height: 180px;
-      overflow-y: scroll;
-      border: 2px solid #000;
-      border-radius: 10px;
-      background: #eee;
-      text-align: center;
-    }
-    .activity {
-      font-size: 18px;
-      padding: 15px;
-      border-bottom: 1px solid #ccc;
-      cursor: pointer;
-    }
-    .log {
-      max-width: 95%;
-      margin: 10px auto;
-      background: #f1f1f1;
-      padding: 10px;
-      border-radius: 8px;
-    }
-    .log h3 {
-      margin-top: 0;
-      font-size: 16px;
-    }
-    .log ul {
-      list-style: none;
-      padding: 0;
-    }
-    .log li {
-      padding: 5px;
-      border-bottom: 1px solid #ccc;
-      font-size: 14px;
-    }
-    @media (max-width: 600px) {
-      .calendar-grid {
-        grid-template-columns: 50px repeat(3, 1fr);
-      }
-      .toolbar {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-      .nav-controls button {
-        margin-top: 5px;
-      }
-      .activity {
-        font-size: 16px;
-        padding: 12px;
-      }
-    }
   </style>
 </head>
 <body>
@@ -146,72 +93,26 @@
   <div class="toolbar">
     <h2 id="current-week"></h2>
     <div>
-      <button onclick="setView(1)">1 ден</button>
-      <button onclick="setView(2)">2 дни</button>
-      <button onclick="setView(3)">3 дни</button>
-      <button onclick="setView(4)">4 дни</button>
-      <button onclick="setView(7)">7 дни</button>
+      <button>Ден</button>
+      <button>Седмица</button>
+      <button>Месец</button>
     </div>
-  </div>
-
-  <div class="roller-container" id="roller"></div>
-
-  <div class="log">
-    <h3>Лог с активности:</h3>
-    <ul id="log"></ul>
   </div>
 
   <div class="calendar-grid" id="calendar"></div>
 
   <script>
-    const activities = ["Ставане", "Закуска", "Обед", "Вечеря", "Фитнес", "Работа", "Почивка", "Филм", "Лягане"];
-    const roller = document.getElementById('roller');
-    const log = document.getElementById('log');
-    let currentActivity = null;
-    let activityStart = null;
-
-    function renderActivities() {
-      roller.innerHTML = '';
-      activities.forEach((act) => {
-        const div = document.createElement('div');
-        div.className = 'activity';
-        div.innerText = act;
-        div.onclick = () => {
-          const now = new Date();
-          if (currentActivity && activityStart) {
-            const end = now;
-            const dur = Math.round((end - activityStart) / 60000);
-            const li = document.createElement('li');
-            li.textContent = `${currentActivity}: ${format(activityStart)} - ${format(end)} (${dur} мин)`;
-            log.appendChild(li);
-          }
-          currentActivity = act;
-          activityStart = now;
-        };
-        roller.appendChild(div);
-      });
-    }
-
-    function format(d) {
-      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    }
-
-    // Calendar
     const calendar = document.getElementById('calendar');
     const currentWeekLabel = document.getElementById('current-week');
     let baseDate = new Date();
-    let viewDays = 7;
 
     function goToToday() {
       baseDate = new Date();
       buildGrid();
     }
+
     function changeWeek(offset) {
-      baseDate.setDate(baseDate.getDate() + offset * viewDays);
-      buildGrid();
-    }
-    function setView(days) {
-      viewDays = days;
+      baseDate.setDate(baseDate.getDate() + offset * 7);
       buildGrid();
     }
 
@@ -220,12 +121,12 @@
       const weekStart = new Date(baseDate);
       weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1);
       const days = [];
-      for (let i = 0; i < viewDays; i++) {
+      for (let i = 0; i < 7; i++) {
         const d = new Date(weekStart);
         d.setDate(d.getDate() + i);
         days.push(d);
       }
-      currentWeekLabel.textContent = `${days[0].toLocaleDateString()} - ${days[days.length-1].toLocaleDateString()}`;
+      currentWeekLabel.textContent = `${days[0].toLocaleDateString()} - ${days[6].toLocaleDateString()}`;
       calendar.appendChild(document.createElement('div'));
       days.forEach(d => {
         const div = document.createElement('div');
@@ -238,15 +139,36 @@
         label.className = 'hour-label';
         label.textContent = `${h}:00`;
         calendar.appendChild(label);
-        for (let d = 0; d < viewDays; d++) {
+        for (let d = 0; d < 7; d++) {
           const cell = document.createElement('div');
           cell.className = `cell-${d}-${h}`;
           calendar.appendChild(cell);
         }
       }
+      simulateSampleEvents(days);
     }
 
-    renderActivities();
+    function simulateSampleEvents(days) {
+      for (let i = 0; i < 7; i++) {
+        const d = i;
+        const sample = [
+          { hour: 8, text: 'Закуска' },
+          { hour: 9, text: 'Работа' },
+          { hour: 13, text: 'Почивка' },
+          { hour: 18, text: 'Филм' }
+        ];
+        sample.forEach(evt => {
+          const cell = document.querySelector(`.cell-${d}-${evt.hour}`);
+          if (cell) {
+            const div = document.createElement('div');
+            div.className = 'event';
+            div.innerText = evt.text;
+            cell.appendChild(div);
+          }
+        });
+      }
+    }
+
     goToToday();
   </script>
 </body>
