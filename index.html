@@ -140,7 +140,35 @@
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
 
+    function simulateLast10Days() {
+      const now = new Date();
+      for (let i = 10; i >= 1; i--) {
+        const day = new Date(now);
+        day.setDate(now.getDate() - i);
+
+        const sleepStart = new Date(day);
+        sleepStart.setHours(23, 0);
+        const sleepEnd = new Date(sleepStart);
+        sleepEnd.setHours(7);
+        sleepEnd.setDate(sleepEnd.getDate() + 1);
+        addToCalendar("Лягане", sleepStart, sleepEnd, 480);
+
+        const fitnessStart = new Date(day);
+        fitnessStart.setHours(8);
+        const fitnessEnd = new Date(fitnessStart);
+        fitnessEnd.setHours(9);
+        addToCalendar("Фитнес", fitnessStart, fitnessEnd, 60);
+
+        const workStart = new Date(day);
+        workStart.setHours(9, 15);
+        const workEnd = new Date(workStart);
+        workEnd.setHours(17, 15);
+        addToCalendar("Работа", workStart, workEnd, 480);
+      }
+    }
+
     renderActivities();
+    simulateLast10Days();
   </script>
 </body>
 </html>
