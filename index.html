@@ -15,13 +15,28 @@
     }
 
     .app {
-      max-width: 480px;
+      max-width: 900px;
       margin: 0 auto;
       padding: 16px;
     }
 
+    .top-layout {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    @media (min-width: 768px) {
+      .top-layout {
+        flex-direction: row;
+        align-items: flex-start;
+      }
+    }
+
+    /* РОЛКА */
+
     .reel-container {
-      margin-top: 20px;
+      flex: 1;
       border-radius: 16px;
       padding: 8px;
       background: #222;
@@ -30,7 +45,7 @@
 
     .reel {
       width: 100%;
-      height: 200px;
+      height: 220px;
       overflow-y: scroll;
       scroll-snap-type: y mandatory;
       border-radius: 12px;
@@ -51,12 +66,87 @@
     }
 
     .current-box {
-      margin-top: 20px;
+      margin-top: 12px;
       padding: 12px;
       border-radius: 12px;
       background: #1f2933;
       font-size: 1rem;
     }
+
+    .hint {
+      margin-top: 6px;
+      font-size: 0.8rem;
+      color: #aaa;
+    }
+
+    /* КАЛЕНДАР – стил подобен на дневен изглед в Google Calendar */
+
+    .calendar {
+      flex: 1.4;
+      display: flex;
+      border-radius: 16px;
+      border: 1px solid #444;
+      background: #181818;
+      overflow: hidden;
+      min-height: 260px;
+    }
+
+    .cal-hours {
+      width: 60px;
+      background: #141414;
+      border-right: 1px solid #333;
+      font-size: 0.75rem;
+      color: #aaa;
+      position: relative;
+    }
+
+    .cal-hour-label {
+      position: absolute;
+      left: 4px;
+      transform: translateY(-50%);
+    }
+
+    .cal-day {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .cal-day-header {
+      padding: 6px 10px;
+      border-bottom: 1px solid #333;
+      font-size: 0.9rem;
+      background: #202020;
+    }
+
+    .cal-day-inner {
+      position: relative;
+      flex: 1;
+      height: 260px; /* фиксирана височина, за да се виждат блокове */
+      background-image: linear-gradient(to bottom, #222 1px, transparent 1px);
+      background-size: 100% calc(100% / 24);
+    }
+
+    .cal-event {
+      position: absolute;
+      left: 6px;
+      right: 6px;
+      border-radius: 6px;
+      padding: 2px 4px;
+      font-size: 0.7rem;
+      overflow: hidden;
+      box-sizing: border-box;
+      border: 1px solid #000;
+      background: rgba(37, 99, 235, 0.8);
+    }
+
+    .cal-event small {
+      display: block;
+      font-size: 0.65rem;
+      opacity: 0.9;
+    }
+
+    /* ЛОГ И СЪН */
 
     .log-container {
       margin-top: 20px;
@@ -83,22 +173,36 @@
       font-size: 0.95rem;
       color: #bbf7d0;
     }
+
   </style>
 </head>
 
 <body>
   <div class="app">
 
-    <div class="reel-container">
-      <div id="reel" class="reel"></div>
-    </div>
+    <div class="top-layout">
+      <!-- РОЛКА -->
+      <div class="reel-container">
+        <div id="reel" class="reel"></div>
 
-    <div class="current-box">
-      <b>Текуща активност:</b>
-      <div id="currentActivityText">няма</div>
-    </div>
+        <div class="current-box">
+          <b>Текуща активност:</b>
+          <div id="currentActivityText">няма</div>
+          <div class="hint">Плъзни и натисни върху активност, за да започне / смени.</div>
+        </div>
 
-    <div id="sleepInfo" class="sleep-info" style="display:none;"></div>
+        <div id="sleepInfo" class="sleep-info" style="display:none;"></div>
+      </div>
+
+      <!-- КАЛЕНДАР -->
+      <div class="calendar">
+        <div id="calHours" class="cal-hours"></div>
+        <div class="cal-day">
+          <div id="calDayHeader" class="cal-day-header"></div>
+          <div id="calDayInner" class="cal-day-inner"></div>
+        </div>
+      </div>
+    </div>
 
     <div class="log-container">
       <h2>Лог</h2>
@@ -125,6 +229,9 @@
     const currentActivityText = document.getElementById("currentActivityText");
     const logList = document.getElementById("logList");
     const sleepInfo = document.getElementById("sleepInfo");
+    const calHours = document.getElementById("calHours");
+    const calDayHeader = document.getElementById("calDayHeader");
+    const calDayInner = document.getElementById("calDayInner");
 
     // пълним ролката
     activities.forEach(name => {
@@ -134,6 +241,33 @@
       item.addEventListener("click", () => selectActivity(name));
       reel.appendChild(item);
     });
+
+    // часовете в календара
+    function initCalendarHours() {
+      calHours.innerHTML = "";
+      const h = calHours.clientHeight || 260;
+      for (let hour = 0; hour < 24; hour++) {
+        const label = document.createElement("div");
+        label.className = "cal-hour-label";
+        const y = (hour / 24) * h;
+        label.style.top = `${y}px`;
+        label.textContent = `${String(hour).padStart(2, "0")}:00`;
+        calHours.appendChild(label);
+      }
+    }
+
+    window.addEventListener("load", () => {
+      initCalendarHours();
+      const today = new Date();
+      calDayHeader.textContent = today.toLocaleDateString("bg-BG", {
+        weekday: "long",
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
+    });
+
+    window.addEventListener("resize", initCalendarHours);
 
     let currentEntry = null;
     const logEntries = [];
@@ -173,6 +307,50 @@
       });
     }
 
+    function isSameDay(a, b) {
+      return (
+        a.getFullYear() === b.getFullYear() &&
+        a.getMonth() === b.getMonth() &&
+        a.getDate() === b.getDate()
+      );
+    }
+
+    function renderCalendar() {
+      calDayInner.innerHTML = "";
+
+      if (logEntries.length === 0) return;
+
+      // взимаме деня на първия запис (или днешния)
+      const refDay = logEntries[0].start;
+      const dayStart = new Date(refDay);
+      dayStart.setHours(0, 0, 0, 0);
+
+      const dayMs = 24 * 60 * 60 * 1000;
+      const height = calDayInner.clientHeight || 260;
+
+      logEntries.forEach(entry => {
+        if (!isSameDay(entry.start, dayStart)) return; // ако е друг ден – прескачаме
+
+        const startOffset = entry.start - dayStart;
+        const endOffset = entry.end - dayStart;
+        const top = (startOffset / dayMs) * height;
+        let h = ((endOffset - startOffset) / dayMs) * height;
+        if (h < 4) h = 4; // минимум височина да се вижда
+
+        const ev = document.createElement("div");
+        ev.className = "cal-event";
+        ev.style.top = `${top}px`;
+        ev.style.height = `${h}px`;
+
+        ev.innerHTML = `
+          ${entry.name}
+          <small>${formatTime(entry.start)} – ${formatTime(entry.end)}</small>
+        `;
+
+        calDayInner.appendChild(ev);
+      });
+    }
+
     function selectActivity(name) {
       const now = new Date();
       sleepInfo.style.display = "none";
@@ -189,6 +367,7 @@
         }
 
         renderLog();
+        renderCalendar();
       }
 
       // стартираме нова
