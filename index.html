@@ -148,6 +148,7 @@
   <div class="calendar-grid" id="calendar"></div>
 
   <script>
+    const STORAGE_KEY = "activity_log_data";
     const activities = ["Ставане", "Закуска", "Обед", "Вечеря", "Фитнес", "Работа", "Почивка", "Филм", "Лягане"];
     const colors = {
       "Ставане": "#1abc9c",
@@ -188,6 +189,7 @@
         tr.innerHTML = `<td>${currentActivity}</td><td>${formatTime(activityStartTime)}</td><td>${formatTime(now)}</td><td>${durationMin}m</td>`;
         tr.querySelectorAll('td').forEach(td => td.style.backgroundColor = colors[currentActivity]);
         calendarBody.appendChild(tr);
+        saveToStorage();
       }
       currentActivity = activity;
       activityStartTime = now;
@@ -195,6 +197,17 @@
 
     function formatTime(date) {
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function saveToStorage() {
+      localStorage.setItem(STORAGE_KEY, calendarBody.innerHTML);
+    }
+
+    function loadFromStorage() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        calendarBody.innerHTML = saved;
+      }
     }
 
     // Google Calendar Grid
@@ -268,6 +281,7 @@
 
     renderActivities();
     buildGrid();
+    window.addEventListener('DOMContentLoaded', loadFromStorage);
   </script>
 </body>
 </html>
