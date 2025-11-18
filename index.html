@@ -49,6 +49,11 @@
     }
     .log ul {
       padding-left: 20px;
+      list-style: none;
+    }
+    .log li {
+      padding: 5px 0;
+      border-bottom: 1px solid #333;
     }
     .calendar table {
       width: 100%;
@@ -106,23 +111,18 @@
 
     function handleActivityClick(activity) {
       const now = new Date();
-      const timeStr = now.toLocaleTimeString();
 
       if (currentActivity !== null) {
         const duration = Math.round((now - activityStartTime) / 1000);
         addToCalendar(currentActivity, activityStartTime, now, duration);
 
         const li = document.createElement('li');
-        li.innerText = `${timeStr} — край на: ${currentActivity} (${duration}s)`;
+        li.innerText = `${currentActivity} | Старт: ${activityStartTime.toLocaleTimeString()} | Край: ${now.toLocaleTimeString()} | ${duration}s`;
         log.appendChild(li);
       }
 
       currentActivity = activity;
       activityStartTime = now;
-
-      const li = document.createElement('li');
-      li.innerText = `${timeStr} — старт на: ${currentActivity}`;
-      log.appendChild(li);
     }
 
     function addToCalendar(activity, start, end, durationSec) {
