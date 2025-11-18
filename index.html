@@ -57,21 +57,42 @@
       border-radius: 5px;
     }
 
+    .gcal-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1000px;
+      margin: 30px auto 10px;
+      padding: 0 10px;
+      color: white;
+    }
+    .gcal-toolbar h2 { margin: 0; font-size: 18px; }
+    .gcal-toolbar button {
+      padding: 6px 12px;
+      background: #333;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .gcal-toolbar button:hover { background: #555; }
+
     .calendar-grid {
       display: grid;
       grid-template-columns: 60px repeat(7, 1fr);
       grid-auto-rows: 40px;
       max-width: 1000px;
-      margin: 40px auto;
+      margin: 0 auto 100px;
       border: 1px solid #444;
     }
     .calendar-grid div {
       border: 1px solid #333;
       padding: 4px;
       overflow: hidden;
+      font-size: 12px;
     }
-    .hour-label { background: #111; text-align: right; padding-right: 5px; color: #888; font-size: 12px; }
-    .day-label { background: #111; text-align: center; font-weight: bold; color: #fff; }
+    .hour-label { background: #111; text-align: right; padding-right: 5px; color: #888; font-size: 11px; }
+    .day-label { background: #111; text-align: center; font-weight: bold; color: #fff; font-size: 13px; }
     .event {
       background-color: #2ecc71;
       color: #000;
@@ -102,10 +123,17 @@
     </table>
   </div>
 
-  <h1>Седмичен изглед (като Google Calendar)</h1>
-  <div class="calendar-grid" id="calendar">
-    <!-- динамичен календар -->
+  <div class="gcal-toolbar">
+    <div>
+      <button onclick="changeWeek(-1)">←</button>
+      <button onclick="goToToday()">Днес</button>
+      <button onclick="changeWeek(1)">→</button>
+    </div>
+    <h2 id="current-week"></h2>
+    <div></div>
   </div>
+
+  <div class="calendar-grid" id="calendar"></div>
 
   <script>
     const activities = ["Ставане", "Закуска", "Обед", "Вечеря", "Фитнес", "Работа", "Почивка", "Филм", "Лягане"];
@@ -150,55 +178,56 @@
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
 
-    // Гугъл-календар изглед
-    const days = ['Пон', 'Вто', 'Сря', 'Чет', 'Пет', 'Съб', 'Нед'];
-    const hours = Array.from({ length: 24 }, (_, i) => `${i}:00`);
+    // Google Calendar Lookalike
     const calendar = document.getElementById('calendar');
+    const currentWeekLabel = document.getElementById('current-week');
+    let baseDate = new Date();
+
+    function goToToday() {
+      baseDate = new Date();
+      buildGrid();
+    }
+
+    function changeWeek(offset) {
+      baseDate.setDate(baseDate.getDate() + offset * 7);
+      buildGrid();
+    }
 
     function buildGrid() {
       calendar.innerHTML = '';
-      calendar.appendChild(createDiv(''));
-      for (let d = 0; d < 7; d++) calendar.appendChild(createDiv(days[d], 'day-label'));
+      const weekStart = new Date(baseDate);
+      weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1);
+      const days = [];
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(weekStart);
+        d.setDate(d.getDate() + i);
+        days.push(d);
+      }
+      currentWeekLabel.textContent = `${days[0].toLocaleDateString()} - ${days[6].toLocaleDateString()}`;
+
+      calendar.appendChild(document.createElement('div'));
+      days.forEach(d => {
+        const div = document.createElement('div');
+        div.className = 'day-label';
+        div.textContent = d.toLocaleDateString('bg-BG', { weekday: 'short', day: '2-digit', month: '2-digit' });
+        calendar.appendChild(div);
+      });
+
       for (let h = 0; h < 24; h++) {
-        calendar.appendChild(createDiv(hours[h], 'hour-label'));
+        const label = document.createElement('div');
+        label.className = 'hour-label';
+        label.textContent = `${h}:00`;
+        calendar.appendChild(label);
         for (let d = 0; d < 7; d++) {
-          const cell = createDiv('', `cell-${d}-${h}`);
+          const cell = document.createElement('div');
+          cell.className = `cell-${d}-${h}`;
           calendar.appendChild(cell);
         }
       }
     }
 
-    function createDiv(content, className = '') {
-      const div = document.createElement('div');
-      if (className) div.className = className;
-      div.innerHTML = content;
-      return div;
-    }
-
-    function simulateWeeklyEvents() {
-      const sample = [
-        { day: 0, hour: 7, text: 'Ставане', color: '#1abc9c' },
-        { day: 0, hour: 8, text: 'Фитнес', color: '#e74c3c' },
-        { day: 0, hour: 9, text: 'Работа', color: '#2ecc71' },
-        { day: 0, hour: 17, text: 'Филм', color: '#34495e' },
-      ];
-      for (let i = 0; i < 7; i++) {
-        sample.forEach(evt => {
-          const cell = document.querySelector(`.cell-${i}-${evt.hour}`);
-          if (cell) {
-            const div = document.createElement('div');
-            div.className = 'event';
-            div.style.background = evt.color;
-            div.innerText = evt.text;
-            cell.appendChild(div);
-          }
-        });
-      }
-    }
-
     renderActivities();
     buildGrid();
-    simulateWeeklyEvents();
   </script>
 </body>
 </html>
