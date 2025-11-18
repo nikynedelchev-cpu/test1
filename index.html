@@ -136,4 +136,10 @@
       const startStr = start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       const endStr = end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       tr.innerHTML = `<td>${startStr}</td><td>${endStr}</td><td>${activity}</td><td>${durationMin}m</td>`;
-      calendarBody.appendChild(
+      calendarBody.appendChild(tr);
+    }
+
+    renderActivities();
+  </script>
+</body>
+</html>
