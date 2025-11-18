@@ -126,7 +126,7 @@
     const logList = document.getElementById("logList");
     const sleepInfo = document.getElementById("sleepInfo");
 
-    // Populate items
+    // пълним ролката
     activities.forEach(name => {
       const item = document.createElement("div");
       item.className = "reel-item";
@@ -139,14 +139,22 @@
     const logEntries = [];
 
     function formatTime(d) {
-      return d.toLocaleTimeString("bg-BG", { hour: "2-digit", minute: "2-digit" });
+      return d.toLocaleTimeString("bg-BG", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit"
+      });
     }
 
     function formatDuration(ms) {
-      const min = Math.floor(ms / 60000);
-      const h = Math.floor(min / 60);
-      const rm = min % 60;
-      return h > 0 ? `${h} ч ${rm} мин` : `${rm} мин`;
+      const totalSec = Math.floor(ms / 1000);
+      const h = Math.floor(totalSec / 3600);
+      const m = Math.floor((totalSec % 3600) / 60);
+      const s = totalSec % 60;
+
+      if (h > 0) return `${h} ч ${m} мин ${s} сек`;
+      if (m > 0) return `${m} мин ${s} сек`;
+      return `${s} сек`;
     }
 
     function renderLog() {
@@ -169,20 +177,21 @@
       const now = new Date();
       sleepInfo.style.display = "none";
 
-      // close previous
+      // затваряме предишната
       if (currentEntry) {
         const e = { name: currentEntry.name, start: currentEntry.start, end: now };
         logEntries.push(e);
 
         if (currentEntry.name === "Лягане" && name === "Ставане") {
-          sleepInfo.innerHTML = `Сън: ${formatDuration(e.end - e.start)}<br>${formatTime(e.start)} → ${formatTime(e.end)}`;
+          sleepInfo.innerHTML =
+            `Сън: ${formatDuration(e.end - e.start)}<br>${formatTime(e.start)} → ${formatTime(e.end)}`;
           sleepInfo.style.display = "block";
         }
 
         renderLog();
       }
 
-      // start new
+      // стартираме нова
       currentEntry = { name, start: now };
       currentActivityText.textContent = `${name} (от ${formatTime(now)})`;
     }
