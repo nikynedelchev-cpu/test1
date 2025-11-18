@@ -24,15 +24,15 @@
       border-bottom: 1px solid #333;
       cursor: pointer;
     }
-    .activity:nth-child(1), .log-item.Ставане { background-color: #1abc9c; }
-    .activity:nth-child(2), .log-item.Закуска { background-color: #3498db; }
-    .activity:nth-child(3), .log-item.Обед { background-color: #9b59b6; }
-    .activity:nth-child(4), .log-item.Вечеря { background-color: #e67e22; }
-    .activity:nth-child(5), .log-item.Фитнес { background-color: #e74c3c; }
-    .activity:nth-child(6), .log-item.Работа { background-color: #2ecc71; }
-    .activity:nth-child(7), .log-item.Почивка { background-color: #f1c40f; }
-    .activity:nth-child(8), .log-item.Филм { background-color: #34495e; }
-    .activity:nth-child(9), .log-item.Лягане { background-color: #ff6f61; }
+    .activity:nth-child(1), .log-item.Ставане, .calendar-item.Ставане { background-color: #1abc9c; }
+    .activity:nth-child(2), .log-item.Закуска, .calendar-item.Закуска { background-color: #3498db; }
+    .activity:nth-child(3), .log-item.Обед, .calendar-item.Обед { background-color: #9b59b6; }
+    .activity:nth-child(4), .log-item.Вечеря, .calendar-item.Вечеря { background-color: #e67e22; }
+    .activity:nth-child(5), .log-item.Фитнес, .calendar-item.Фитнес { background-color: #e74c3c; }
+    .activity:nth-child(6), .log-item.Работа, .calendar-item.Работа { background-color: #2ecc71; }
+    .activity:nth-child(7), .log-item.Почивка, .calendar-item.Почивка { background-color: #f1c40f; }
+    .activity:nth-child(8), .log-item.Филм, .calendar-item.Филм { background-color: #34495e; }
+    .activity:nth-child(9), .log-item.Лягане, .calendar-item.Лягане { background-color: #ff6f61; }
 
     .activity:hover { filter: brightness(1.2); }
 
@@ -68,6 +68,9 @@
     }
     .calendar th {
       background: #222;
+    }
+    .calendar-item td {
+      background-color: inherit;
     }
   </style>
 </head>
@@ -114,12 +117,12 @@
       const now = new Date();
 
       if (currentActivity !== null) {
-        const duration = Math.round((now - activityStartTime) / 1000);
-        addToCalendar(currentActivity, activityStartTime, now, duration);
+        const durationMin = Math.round((now - activityStartTime) / 60000);
+        addToCalendar(currentActivity, activityStartTime, now, durationMin);
 
         const li = document.createElement('li');
         li.className = `log-item ${currentActivity}`;
-        li.innerText = `${currentActivity} | Старт: ${activityStartTime.toLocaleTimeString()} | Край: ${now.toLocaleTimeString()} | ${duration}s`;
+        li.innerText = `${currentActivity} | Старт: ${activityStartTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} | Край: ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} | ${durationMin}m`;
         log.appendChild(li);
       }
 
@@ -127,16 +130,10 @@
       activityStartTime = now;
     }
 
-    function addToCalendar(activity, start, end, durationSec) {
+    function addToCalendar(activity, start, end, durationMin) {
       const tr = document.createElement('tr');
-      const startStr = start.toLocaleTimeString();
-      const endStr = end.toLocaleTimeString();
-      const durationStr = `${Math.floor(durationSec / 60)}m ${durationSec % 60}s`;
-      tr.innerHTML = `<td>${startStr}</td><td>${endStr}</td><td>${activity}</td><td>${durationStr}</td>`;
-      calendarBody.appendChild(tr);
-    }
-
-    renderActivities();
-  </script>
-</body>
-</html>
+      tr.className = `calendar-item ${activity}`;
+      const startStr = start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const endStr = end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      tr.innerHTML = `<td>${startStr}</td><td>${endStr}</td><td>${activity}</td><td>${durationMin}m</td>`;
+      calendarBody.appendChild(
