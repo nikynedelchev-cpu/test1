@@ -1,205 +1,101 @@
 <!DOCTYPE html>
 <html lang="bg">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Дневен револвер</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Дневен календар</title>
   <style>
-    body { font-family: sans-serif; background: #000; color: #fff; margin: 0; padding: 0; }
-    h1 { text-align: center; margin-top: 20px; }
-    p { text-align: center; }
-    .roller-container {
-      text-align: center;
-      margin: 30px auto;
-      max-width: 320px;
-      height: 180px;
-      overflow-y: scroll;
-      border: 2px solid #fff;
-      border-radius: 10px;
-      background: #111;
+    body { background: #000; color: #fff; font-family: sans-serif; margin: 0; padding: 0; }
+    h1 { text-align: center; margin: 20px 0; }
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: 60px repeat(7, 1fr);
+      grid-auto-rows: 40px;
+      max-width: 1000px;
+      margin: auto;
+      border: 1px solid #444;
     }
-    .activity {
-      font-size: 20px;
-      padding: 20px;
-      border-bottom: 1px solid #333;
-      cursor: pointer;
+    .calendar-grid div {
+      border: 1px solid #333;
+      padding: 4px;
+      overflow: hidden;
     }
-    .activity:nth-child(1), .log-item.Ставане, .calendar-item.Ставане td { background-color: #1abc9c; }
-    .activity:nth-child(2), .log-item.Закуска, .calendar-item.Закуска td { background-color: #3498db; }
-    .activity:nth-child(3), .log-item.Обед, .calendar-item.Обед td { background-color: #9b59b6; }
-    .activity:nth-child(4), .log-item.Вечеря, .calendar-item.Вечеря td { background-color: #e67e22; }
-    .activity:nth-child(5), .log-item.Фитнес, .calendar-item.Фитнес td { background-color: #e74c3c; }
-    .activity:nth-child(6), .log-item.Работа, .calendar-item.Работа td { background-color: #2ecc71; }
-    .activity:nth-child(7), .log-item.Почивка, .calendar-item.Почивка td { background-color: #f1c40f; }
-    .activity:nth-child(8), .log-item.Филм, .calendar-item.Филм td { background-color: #34495e; }
-    .activity:nth-child(9), .log-item.Лягане, .calendar-item.Лягане td { background-color: #ff6f61; }
-
-    .activity:hover { filter: brightness(1.2); }
-
-    .log, .calendar {
-      max-width: 90%;
-      margin: 20px auto;
-      background: #111;
-      padding: 20px;
-      border-radius: 10px;
+    .hour-label { background: #111; text-align: right; padding-right: 5px; color: #888; font-size: 12px; }
+    .day-label { background: #111; text-align: center; font-weight: bold; color: #fff; }
+    .event {
+      background-color: #2ecc71;
+      color: #000;
+      font-size: 12px;
+      border-radius: 4px;
+      padding: 2px 4px;
+      height: 100%;
     }
-    .log h3, .calendar h3 {
-      margin-top: 0;
-      text-align: center;
-    }
-    .log ul {
-      padding-left: 20px;
-      list-style: none;
-    }
-    .log li {
-      padding: 5px 10px;
-      margin-bottom: 5px;
-      border-radius: 5px;
-    }
-    .calendar table {
-      width: 100%;
-      border-collapse: collapse;
-      color: #fff;
-    }
-    .calendar th, .calendar td {
-      border: 1px solid #555;
-      padding: 8px;
-      text-align: center;
-    }
-    .calendar th {
-      background: #222;
-    }
-    .toggle-button {
-      display: block;
-      margin: 10px auto;
-      padding: 10px 20px;
-      background: #444;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    .toggle-button:hover {
-      background: #666;
-    }
+    .container { padding: 10px; text-align: center; }
   </style>
 </head>
 <body>
-  <h1>Дневен револвер</h1>
-  <p>Плъзни и избери активност</p>
-  <div class="roller-container" id="roller"></div>
-
-  <div class="log">
-    <h3>Лог:</h3>
-    <ul id="log"></ul>
-  </div>
-
-  <div class="calendar">
-    <h3>Календар с дейности:</h3>
-    <button class="toggle-button" onclick="toggleDemo()">Покажи демонстрационни дни</button>
-    <table>
-      <thead>
-        <tr><th>Начало</th><th>Край</th><th>Активност</th><th>Продължителност</th></tr>
-      </thead>
-      <tbody id="calendar-body"></tbody>
-    </table>
+  <h1>Календар (седмичен изглед)</h1>
+  <div class="container">
+    <div class="calendar-grid" id="calendar">
+      <!-- Header Days -->
+    </div>
   </div>
 
   <script>
-    const activities = ["Ставане", "Закуска", "Обед", "Вечеря", "Фитнес", "Работа", "Почивка", "Филм", "Лягане"];
-    let currentActivity = null;
-    let activityStartTime = null;
-    const roller = document.getElementById('roller');
-    const log = document.getElementById('log');
-    const calendarBody = document.getElementById('calendar-body');
-    const demoRows = [];
-    let demoVisible = false;
+    const days = ['Пон', 'Вто', 'Сря', 'Чет', 'Пет', 'Съб', 'Нед'];
+    const hours = Array.from({ length: 24 }, (_, i) => `${i}:00`);
 
-    function renderActivities() {
-      roller.innerHTML = '';
-      activities.forEach((act) => {
-        const div = document.createElement('div');
-        div.className = 'activity';
-        div.innerText = act;
-        div.addEventListener('click', () => handleActivityClick(act));
-        roller.appendChild(div);
-      });
-    }
+    const calendar = document.getElementById('calendar');
 
-    function handleActivityClick(activity) {
-      const now = new Date();
+    function buildCalendar() {
+      // Празна клетка горе вляво
+      calendar.appendChild(createDiv(''));
 
-      if (currentActivity !== null) {
-        const durationMin = Math.round((now - activityStartTime) / 60000);
-        addToCalendar(currentActivity, activityStartTime, now, durationMin);
-
-        const li = document.createElement('li');
-        li.className = `log-item ${currentActivity}`;
-        li.innerText = `${currentActivity} | Старт: ${formatTime(activityStartTime)} | Край: ${formatTime(now)} | ${durationMin}m`;
-        log.appendChild(li);
+      // Заглавки за дните
+      for (let d = 0; d < 7; d++) {
+        calendar.appendChild(createDiv(days[d], 'day-label'));
       }
 
-      currentActivity = activity;
-      activityStartTime = now;
-    }
-
-    function addToCalendar(activity, start, end, durationMin, isDemo = false) {
-      const tr = document.createElement('tr');
-      tr.className = `calendar-item ${activity}`;
-      const startStr = formatTime(start);
-      const endStr = formatTime(end);
-      tr.innerHTML = `<td>${startStr}</td><td>${endStr}</td><td>${activity}</td><td>${durationMin}m</td>`;
-      if (isDemo) {
-        demoRows.push(tr);
-      } else {
-        calendarBody.appendChild(tr);
+      // Часове и празни клетки
+      for (let h = 0; h < 24; h++) {
+        calendar.appendChild(createDiv(hours[h], 'hour-label'));
+        for (let d = 0; d < 7; d++) {
+          const cell = createDiv('', `cell-${d}-${h}`);
+          calendar.appendChild(cell);
+        }
       }
     }
 
-    function formatTime(date) {
-      return date.toLocaleString('bg-BG', {
-        day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
-      });
+    function createDiv(content, className = '') {
+      const div = document.createElement('div');
+      if (className) div.className = className;
+      div.innerHTML = content;
+      return div;
     }
 
-    function simulateLast10Days() {
-      const now = new Date();
-      for (let i = 10; i >= 1; i--) {
-        const day = new Date(now);
-        day.setDate(now.getDate() - i);
-
-        const sleepStart = new Date(day);
-        sleepStart.setHours(23, 0);
-        const sleepEnd = new Date(sleepStart);
-        sleepEnd.setHours(7);
-        sleepEnd.setDate(sleepEnd.getDate() + 1);
-        addToCalendar("Лягане", sleepStart, sleepEnd, 480, true);
-
-        const fitnessStart = new Date(day);
-        fitnessStart.setHours(8);
-        const fitnessEnd = new Date(fitnessStart);
-        fitnessEnd.setHours(9);
-        addToCalendar("Фитнес", fitnessStart, fitnessEnd, 60, true);
-
-        const workStart = new Date(day);
-        workStart.setHours(9, 15);
-        const workEnd = new Date(workStart);
-        workEnd.setHours(17, 15);
-        addToCalendar("Работа", workStart, workEnd, 480, true);
+    function simulateEvents() {
+      const sample = [
+        { day: 0, hour: 7, text: 'Ставане', color: '#1abc9c' },
+        { day: 0, hour: 8, text: 'Фитнес', color: '#e74c3c' },
+        { day: 0, hour: 9, text: 'Работа', color: '#2ecc71' },
+        { day: 0, hour: 17, text: 'Филм', color: '#34495e' },
+      ];
+      for (let i = 0; i < 7; i++) {
+        sample.forEach(evt => {
+          const cell = document.querySelector(`.cell-${i}-${evt.hour}`);
+          if (cell) {
+            const div = document.createElement('div');
+            div.className = 'event';
+            div.style.background = evt.color;
+            div.innerText = evt.text;
+            cell.appendChild(div);
+          }
+        });
       }
     }
 
-    function toggleDemo() {
-      demoVisible = !demoVisible;
-      if (demoVisible) {
-        demoRows.forEach(row => calendarBody.appendChild(row));
-      } else {
-        demoRows.forEach(row => calendarBody.removeChild(row));
-      }
-    }
-
-    renderActivities();
-    simulateLast10Days();
+    buildCalendar();
+    simulateEvents();
   </script>
 </body>
 </html>
