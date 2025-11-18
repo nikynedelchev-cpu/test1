@@ -1,0 +1,5 @@
+{
+  "name": "Daily Revolver Activity Logger",
+  "description": "A simple and elegant web application to log your daily activities using a unique reel selector. Track your tasks, from meals and work to fitness and rest, and get insights into your time, including sleep duration.",
+  "requestFramePermissions": []
+}
