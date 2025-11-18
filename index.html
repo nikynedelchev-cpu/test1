@@ -24,15 +24,15 @@
       border-bottom: 1px solid #333;
       cursor: pointer;
     }
-    .activity:nth-child(1), .log-item.Ставане { background-color: #1abc9c; }
-    .activity:nth-child(2), .log-item.Закуска { background-color: #3498db; }
-    .activity:nth-child(3), .log-item.Обед { background-color: #9b59b6; }
-    .activity:nth-child(4), .log-item.Вечеря { background-color: #e67e22; }
-    .activity:nth-child(5), .log-item.Фитнес { background-color: #e74c3c; }
-    .activity:nth-child(6), .log-item.Работа { background-color: #2ecc71; }
-    .activity:nth-child(7), .log-item.Почивка { background-color: #f1c40f; }
-    .activity:nth-child(8), .log-item.Филм { background-color: #34495e; }
-    .activity:nth-child(9), .log-item.Лягане { background-color: #ff6f61; }
+    .activity:nth-child(1), .log-item.Ставане, .calendar-item.Ставане td { background-color: #1abc9c; }
+    .activity:nth-child(2), .log-item.Закуска, .calendar-item.Закуска td { background-color: #3498db; }
+    .activity:nth-child(3), .log-item.Обед, .calendar-item.Обед td { background-color: #9b59b6; }
+    .activity:nth-child(4), .log-item.Вечеря, .calendar-item.Вечеря td { background-color: #e67e22; }
+    .activity:nth-child(5), .log-item.Фитнес, .calendar-item.Фитнес td { background-color: #e74c3c; }
+    .activity:nth-child(6), .log-item.Работа, .calendar-item.Работа td { background-color: #2ecc71; }
+    .activity:nth-child(7), .log-item.Почивка, .calendar-item.Почивка td { background-color: #f1c40f; }
+    .activity:nth-child(8), .log-item.Филм, .calendar-item.Филм td { background-color: #34495e; }
+    .activity:nth-child(9), .log-item.Лягане, .calendar-item.Лягане td { background-color: #ff6f61; }
 
     .activity:hover { filter: brightness(1.2); }
 
@@ -56,6 +56,18 @@
       margin-bottom: 5px;
       border-radius: 5px;
     }
+    .calendar-log table {
+      width: 100%;
+      border-collapse: collapse;
+      color: #fff;
+    }
+    .calendar-log th, .calendar-log td {
+      border: 1px solid #555;
+      padding: 8px;
+      text-align: center;
+    }
+    .calendar-log th { background: #222; }
+    .calendar-item td { background-color: #111; }
 
     .gcal-toolbar {
       display: flex;
@@ -117,7 +129,7 @@
     <h3>Календар с дейности:</h3>
     <table>
       <thead>
-        <tr><th>Начало</th><th>Край</th><th>Активност</th><th>Продължителност</th></tr>
+        <tr><th>Активност</th><th>Начало</th><th>Край</th><th>Продължителност</th></tr>
       </thead>
       <tbody id="calendar-body"></tbody>
     </table>
@@ -137,9 +149,24 @@
 
   <script>
     const activities = ["Ставане", "Закуска", "Обед", "Вечеря", "Фитнес", "Работа", "Почивка", "Филм", "Лягане"];
+    const colors = {
+      "Ставане": "#1abc9c",
+      "Закуска": "#3498db",
+      "Обед": "#9b59b6",
+      "Вечеря": "#e67e22",
+      "Фитнес": "#e74c3c",
+      "Работа": "#2ecc71",
+      "Почивка": "#f1c40f",
+      "Филм": "#34495e",
+      "Лягане": "#ff6f61"
+    };
+
     const roller = document.getElementById('roller');
     const log = document.getElementById('log');
     const calendarBody = document.getElementById('calendar-body');
+
+    let currentActivity = null;
+    let activityStartTime = null;
 
     function renderActivities() {
       roller.innerHTML = '';
@@ -152,24 +179,16 @@
       });
     }
 
-    let currentActivity = null;
-    let activityStartTime = null;
-
     function handleActivityClick(activity) {
       const now = new Date();
       if (currentActivity !== null) {
         const durationMin = Math.round((now - activityStartTime) / 60000);
-
-        const li = document.createElement('li');
-        li.className = `log-item ${currentActivity}`;
-        li.innerText = `${currentActivity} | Старт: ${formatTime(activityStartTime)} | Край: ${formatTime(now)} | ${durationMin}m`;
-        log.appendChild(li);
-
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${formatTime(activityStartTime)}</td><td>${formatTime(now)}</td><td>${currentActivity}</td><td>${durationMin}m</td>`;
+        tr.className = `calendar-item ${currentActivity}`;
+        tr.innerHTML = `<td>${currentActivity}</td><td>${formatTime(activityStartTime)}</td><td>${formatTime(now)}</td><td>${durationMin}m</td>`;
+        tr.querySelectorAll('td').forEach(td => td.style.backgroundColor = colors[currentActivity]);
         calendarBody.appendChild(tr);
       }
-
       currentActivity = activity;
       activityStartTime = now;
     }
@@ -178,7 +197,7 @@
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
 
-    // Google Calendar Lookalike
+    // Google Calendar Grid
     const calendar = document.getElementById('calendar');
     const currentWeekLabel = document.getElementById('current-week');
     let baseDate = new Date();
@@ -204,7 +223,6 @@
         days.push(d);
       }
       currentWeekLabel.textContent = `${days[0].toLocaleDateString()} - ${days[6].toLocaleDateString()}`;
-
       calendar.appendChild(document.createElement('div'));
       days.forEach(d => {
         const div = document.createElement('div');
@@ -212,7 +230,6 @@
         div.textContent = d.toLocaleDateString('bg-BG', { weekday: 'short', day: '2-digit', month: '2-digit' });
         calendar.appendChild(div);
       });
-
       for (let h = 0; h < 24; h++) {
         const label = document.createElement('div');
         label.className = 'hour-label';
@@ -223,6 +240,29 @@
           cell.className = `cell-${d}-${h}`;
           calendar.appendChild(cell);
         }
+      }
+      simulateLast10Days(days);
+    }
+
+    function simulateLast10Days(days) {
+      for (let i = 0; i < 7; i++) {
+        const d = i;
+        const sample = [
+          { hour: 7, text: 'Ставане' },
+          { hour: 8, text: 'Фитнес' },
+          { hour: 9, text: 'Работа' },
+          { hour: 18, text: 'Филм' }
+        ];
+        sample.forEach(evt => {
+          const cell = document.querySelector(`.cell-${d}-${evt.hour}`);
+          if (cell) {
+            const div = document.createElement('div');
+            div.className = 'event';
+            div.style.background = colors[evt.text];
+            div.innerText = evt.text;
+            cell.appendChild(div);
+          }
+        });
       }
     }
 
